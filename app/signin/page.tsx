@@ -37,7 +37,7 @@ export default function Signin() {
       router.push('/profile/'+user.id)
     } else {
       // Create new user
-      const body = JSON.stringify({
+      const body = {
         name: 'Anonymous', 
         wallet: address,
         wallets:{
@@ -46,7 +46,7 @@ export default function Signin() {
             chain: chainName
           }
         }
-      })
+      }
       const newUser = await postApi('users', body)
       const userInfo = newUser?.data
       console.log('NEWUSER', userInfo)

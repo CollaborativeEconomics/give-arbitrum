@@ -2,7 +2,6 @@ import Chains from '@/lib/chains/server/apis'
 import uploadToIPFS from '@/lib/utils/uploadToIPFS'
 import { getOrganizationById, getInitiativeById, getUserByWallet, createNFT } from '@/lib/utils/registry'
 import { getTransactionInfo } from '@/lib/chains/txinfo'
-import abi721 from '@/contracts/NFT721.json'
 
 interface transactionInfo {
   success?: boolean
