@@ -133,6 +133,7 @@ export default function DonationForm(props:any) {
   }
 
   async function sendPayment({organization, initiative, chainName, chainInfo, wallet, receiver, currency, amount, name, email, receipt}:IPayment){
+    console.log('SEND', {organization, initiative, chainName, chainInfo, wallet, receiver, currency, amount, name, email, receipt})
     setButtonText('WAIT')
     setDisabled(true)
     setMessage('Sending payment, wait a moment...')
@@ -149,7 +150,7 @@ export default function DonationForm(props:any) {
 
     // if amount in USD convert by coin rate
     console.log('RATE:', currency, usdRate)
-    const amountNum = parseInt(amount||'0')
+    const amountNum = parseFloat(amount||'0')
     const coinValue = showUSD ? amountNum : (amountNum / usdRate)
     const usdValue  = showUSD ? (amountNum * usdRate) : amountNum
     const rateMsg   = showUSD 
@@ -157,7 +158,7 @@ export default function DonationForm(props:any) {
       : `${coinValue.toFixed(2)} ${currency} at ${usdRate.toFixed(2)} ${currency}/USD`
     console.log('AMT', showUSD, coinValue, usdValue)
     setRateMessage(rateMsg)
-    const wei = amountNum * 10**18
+    console.log('PAY', coinValue, usdValue)
 
     sdk.sendPayment(receiver, coinValue, destinationTag, async (result:any)=>{
       if(result?.error){

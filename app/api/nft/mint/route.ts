@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Get tx info
-    const chain = process.env.NEXT_PUBLIC_NETWORK || ''
+    const chain = process.env.NEXT_PUBLIC_BLOCKCHAIN || ''
     const txInfo = await Chains[chain].getTransactionInfo(txid)
     console.log('TXINFO', txInfo)
     if(!txInfo){
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     const network   = process.env.NEXT_PUBLIC_NETWORK || ''
     const chainName = process.env.NEXT_PUBLIC_BLOCKCHAIN || ''
-    const currency  = process.env.NEXT_PUBLIC_CURRENCY || ''
+    const currency  = process.env.NEXT_PUBLIC_CURRENCY_CODE || ''
     const amountNum = parseFloat(amount) ||  0.0
     const amountCUR = amountNum.toFixed(4)
     const amountUSD = (amountNum * rate).toFixed(4)
@@ -110,9 +110,8 @@ export async function POST(request: Request) {
     console.log('URI', uriMeta)
 
     // Mint NFT
-    const okMint = await Chains[chain].mintNFT(uriMeta, donorAddress)
-    //const okMint = await Chains[chain].mintNFT('ipfs:123456', 'GAU2AJNUVZ47Q4ZJUVAOQFLN3EE3XJUTV34N2EXGKXRBFZ2MWCN2TZGO')
-    //console.log('Mint result', okMint)
+    const okMint = await Chains[chain].mintNFT(donorAddress, uriMeta)
+    console.log('Mint result', okMint)
     //return Response.json(okMint)
     
     if (!okMint || okMint.error) {

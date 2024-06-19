@@ -78,8 +78,7 @@ class ArbitrumServer {
   async sendPayment(address:string, amount:string, destinTag:string, callback:any){
     console.log('Sending payment...')
     const value = this.toWei(parseFloat(amount))
-    const secret = process.env.ARBITRUM_MINTER_WALLET_SEED || ''
-    //const source = process.env.ARBITRUM_MINTER_WALLET
+    const secret = process.env.MINTER_PRIVATE || ''
     const acct = this.web3.eth.accounts.privateKeyToAccount(secret)
     const source = acct.address
     const nonce = await this.web3.eth.getTransactionCount(source, 'latest')
@@ -98,18 +97,18 @@ class ArbitrumServer {
     //console.log({txHash});
   }
 
-  async mintNFT(uri: string, address: string){
+  async mintNFT(address: string, uri: string){
     console.log(this.chain, 'server minting NFT to', address, uri)
-    const secret   = process.env.ARBITRUM_MINTER_WALLET_SEED || ''
+    const secret   = process.env.MINTER_PRIVATE || ''
     const acct     = this.web3.eth.accounts.privateKeyToAccount(secret)
     const minter   = acct.address
-    const contract = process.env.NEXT_PUBLIC_ARBITRUM_MINTER_CONTRACT || ''
+    const contract = process.env.MINTER_CONTRACT || ''
     const instance = new this.web3.eth.Contract(erc721, contract)
     const noncex   = await this.web3.eth.getTransactionCount(minter, 'latest')
     const nonce    = Number(noncex)
     console.log('MINTER', minter)
     console.log('NONCE', nonce)
-    const data = instance.methods.safeMint(address, uri).encodeABI()
+    const data = instance.methods.mintNFT(address, uri).encodeABI()
     console.log('DATA', data)
     const gasHex = await this.fetchLedger('eth_gasPrice', [])
     const gasPrice = parseInt(gasHex,16)
