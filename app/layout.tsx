@@ -9,7 +9,7 @@ import { ConfigProvider } from '@/components/config'
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Give Stark',
+  title: 'Give Arbitrum',
   description: 'Watch your donations make an impact',
 };
 

@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     // Save metadata
     const metadata = {
-      mintedBy: 'CFCE via GiveStark',
+      mintedBy: 'CFCE via Give Arbitrum',
       created: created,
       donorAddress: donorAddress,
       organization: organizationName,

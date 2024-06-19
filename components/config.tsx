@@ -2,7 +2,7 @@
 import { createContext, useState } from 'react'
 
 const settings = {
-  name: 'Give Stark',
+  name: 'Give Arbitrum',
   version: '1.0',
   theme: 'light',
   wallet: '',
