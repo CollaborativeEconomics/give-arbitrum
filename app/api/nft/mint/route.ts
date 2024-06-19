@@ -1,0 +1,169 @@
+import Chains from '@/lib/chains/server/apis'
+import uploadToIPFS from '@/lib/utils/uploadToIPFS'
+import { getOrganizationById, getInitiativeById, getUserByWallet, createNFT } from '@/lib/utils/registry'
+import { getTransactionInfo } from '@/lib/chains/txinfo'
+import abi721 from '@/contracts/NFT721.json'
+
+interface transactionInfo {
+  success?: boolean
+  error?: string
+  account?: string
+  destination?: string
+  destinationTag?: string
+  amount?: string
+}
+
+// POST /api/nft/mint {paymentId}
+// On donation:
+//   Upload metadata to permanent storage
+//   Mint nft with uri:metadata and get token Id
+//   Send tokenId, offerId to client
+export async function POST(request: Request) {
+  console.log('API MINTING...')
+
+  try {
+    const body:any = await request.json()
+    const {txid, initid, donor, destin, amount, rate} = body
+    console.log('TXID', txid)
+    console.log('INIT', initid)
+    console.log('DONOR', donor)
+    console.log('DESTIN', destin)
+    console.log('AMOUNT', amount)
+    console.log('RATE', rate)
+
+    if(!txid){
+      return Response.json({ error: 'Required txid is missing' }, {status:400})
+    }
+
+    // Get tx info
+    const chain = process.env.NEXT_PUBLIC_NETWORK || ''
+    const txInfo = await Chains[chain].getTransactionInfo(txid)
+    console.log('TXINFO', txInfo)
+    if(!txInfo){
+      return Response.json({ error: 'Transaction not found' }, {status:404})
+    }
+    if ('error' in txInfo) {
+      console.log('ERROR', txInfo.error)
+      return Response.json({ error: txInfo.error }, {status:500})
+    }
+
+    // Form data
+    const created = new Date().toJSON().replace('T', ' ').substring(0, 19)
+    const donorAddress = txInfo.account || ''
+    const user = await getUserByWallet(donorAddress)
+    const userId = user?.id || ''
+  
+    //return Response.json({ success: true, image: 'uriImage', metadata: 'uriMeta', tokenId: '123456', offerId: '123457'})
+
+    // Get initiative info
+    const initiative = await getInitiativeById(initid)
+    //console.log('INITIATIVE', initiative)
+    if(!initiative || initiative?.error) {
+      console.log('ERROR', 'Initiative not found')
+      return Response.json({ error: 'Initiative info not found' }, {status:500})
+    }
+    const initiativeId = initiative?.id || ''
+    const initiativeName = initiative?.title || 'Direct Donation'
+
+    // Get organization info
+    const organization = await getOrganizationById(initiative?.organizationId)
+    //console.log('ORGANIZATION', organization)
+    if(!organization || organization?.error) {
+      console.log('ERROR', 'Organization not found')
+      return Response.json({ error: 'Organization info not found' }, {status:500})
+    }
+    const organizationId = organization?.id
+    console.log(organizationId);
+    const organizationName = organization?.name
+
+    const network   = process.env.NEXT_PUBLIC_NETWORK || ''
+    const chainName = process.env.NEXT_PUBLIC_BLOCKCHAIN || ''
+    const currency  = process.env.NEXT_PUBLIC_CURRENCY || ''
+    const amountNum = parseFloat(amount) ||  0.0
+    const amountCUR = amountNum.toFixed(4)
+    const amountUSD = (amountNum * rate).toFixed(4)
+    const uriImage  = initiative?.imageUri || 'ipfs:QmZWgvsGUGykGyDqjL6zjbKjtqNntYZqNzQrFa6UnyZF1n'
+
+    // Save metadata
+    const metadata = {
+      mintedBy: 'CFCE via GiveStark',
+      created: created,
+      donorAddress: donorAddress,
+      organization: organizationName,
+      initiative: initiativeName,
+      image: uriImage,
+      blockchain: chainName,
+      network,
+      currency,
+      amount: amountCUR,
+      usdValue: amountUSD
+    }
+    console.log('META', metadata)
+    const fileId = 'meta-' + txid // unique file id
+    const bytes = Buffer.from(JSON.stringify(metadata, null, 2))
+    const cidMeta = await uploadToIPFS(fileId, bytes, 'text/plain')
+    console.log('CID', cidMeta)
+    if (!cidMeta || cidMeta.error) {
+      return Response.json({ error: 'Error uploading metadata' }, {status:500})
+    }
+    const cid = cidMeta?.result
+    const uriMeta = 'ipfs:' + cid
+    console.log('URI', uriMeta)
+
+    // Mint NFT
+    const okMint = await Chains[chain].mintNFT(uriMeta, donorAddress)
+    //const okMint = await Chains[chain].mintNFT('ipfs:123456', 'GAU2AJNUVZ47Q4ZJUVAOQFLN3EE3XJUTV34N2EXGKXRBFZ2MWCN2TZGO')
+    //console.log('Mint result', okMint)
+    //return Response.json(okMint)
+    
+    if (!okMint || okMint.error) {
+      return Response.json({ error: 'Error minting NFT' }, {status:500})
+    }
+    const tokenId = okMint?.tokenId
+
+    // Save NFT data to Prisma
+    const data = {
+      created: new Date(),
+      userId: userId,
+      donorAddress: donorAddress,
+      organizationId: organizationId,
+      initiativeId: initiativeId,
+      metadataUri: uriMeta,
+      imageUri: uriImage,
+      coinLabel: chainName,
+      coinNetwork: network,
+      coinSymbol: currency,
+      coinValue: amountCUR,
+      usdValue: amountUSD,
+      tokenId: tokenId,
+      status: 0
+    }
+    console.log('NftData', data)
+    const saved = await createNFT(data)
+    console.log('Saved', saved?.success)
+    if (saved.success) {
+      console.log('NFT saved in DB!')
+    } else {
+      console.error('Error saving NFT in DB!')
+    }
+
+    // Success
+    console.log('Minting completed')
+    console.log('RESULT', {
+      success: true,
+      image: uriImage,
+      metadata: uriMeta,
+      tokenId: tokenId
+    })
+    return Response.json({
+      success: true,
+      image: uriImage,
+      metadata: uriMeta,
+      tokenId: tokenId
+    })
+
+  } catch (ex:any) {
+    console.error(ex)
+    return Response.json({ success: false, error: ex.message }, {status:500})
+  }
+}
