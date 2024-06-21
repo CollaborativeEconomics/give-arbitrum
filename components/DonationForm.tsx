@@ -1,4 +1,4 @@
-import { useState, useRef, useContext } from 'react'
+import { useEffect, useState, useRef, useContext } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Card } from '@/components/ui/card'
@@ -59,11 +59,13 @@ export default function DonationForm(props:any) {
   const organization = initiative?.organization
   if(!initiative || !organization){ return <NotFound /> }
   const {donation, setDonation} = useContext(DonationContext)
+  const currency  = process.env.NEXT_PUBLIC_CURRENCY_CODE || ''
+  const chainName = process.env.NEXT_PUBLIC_BLOCKCHAIN || ''
   const chains = getChainsList()
   const chainLookup = getChainsMap()
-  const chainWallets = getChainWallets(chains[0].coinSymbol)
-  const chainInfo = chainLookup[chains[0].value]
-  const [showUSD, toggleShowUSD] = useState(false)
+  const chainWallets = getChainWallets(currency)
+  const chainInfo = chainLookup[chainName]
+  const [showSYM, toggleShowSYM] = useState(false)
   const [currentChain, setCurrentChain] = useState('Arbitrum')
   const [wallets, setWallets] = useState(chainWallets)
   const [currentWallet, setCurrentWallet] = useState(wallets[0])
@@ -76,6 +78,8 @@ export default function DonationForm(props:any) {
   const [buttonText, setButtonText] = useState('Donate')
   const [message, setMessage] = useState('One wallet confirmation required')
   const [rateMessage, setRateMessage] = useState('USD conversion rate')
+
+  function $(id:string){ return document.getElementById(id) as HTMLInputElement }
 
   function validEmail(text:string){
     //return text.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)
@@ -151,12 +155,12 @@ export default function DonationForm(props:any) {
     // if amount in USD convert by coin rate
     console.log('RATE:', currency, usdRate)
     const amountNum = parseFloat(amount||'0')
-    const coinValue = showUSD ? amountNum : (amountNum / usdRate)
-    const usdValue  = showUSD ? (amountNum * usdRate) : amountNum
-    const rateMsg   = showUSD 
+    const coinValue = showSYM ? amountNum : (amountNum / usdRate)
+    const usdValue  = showSYM ? (amountNum * usdRate) : amountNum
+    const rateMsg   = showSYM 
       ? `USD ${usdValue.toFixed(2)} at ${usdRate.toFixed(2)} ${currency}/USD` 
       : `${coinValue.toFixed(2)} ${currency} at ${usdRate.toFixed(2)} ${currency}/USD`
-    console.log('AMT', showUSD, coinValue, usdValue)
+    console.log('AMT', showSYM, coinValue, usdValue)
     setRateMessage(rateMsg)
     console.log('PAY', coinValue, usdValue)
 
@@ -248,10 +252,6 @@ export default function DonationForm(props:any) {
   }
 
   async function donate(){
-    const chainName = process.env.NEXT_PUBLIC_BLOCKCHAIN || ''
-    const chainInfo = chainLookup[chainName]
-    const chainText = chainName
-    const currency  = process.env.NEXT_PUBLIC_CURRENCY_CODE || ''
     const wallet    = currentWallet.value
     const amount    = typeof(amountRef)=='object' ? (amountRef.current?.value || '0') : '0'
     const name      = typeof(nameRef)=='object' ? (nameRef.current?.value || '') : ''
@@ -269,7 +269,7 @@ export default function DonationForm(props:any) {
 
     if(!validForm({amount, email, receipt})){ return }
 
-    const orgWallet = getWalletByChain(organization?.wallets||[], chainText)
+    const orgWallet = getWalletByChain(organization?.wallets||[], chainName)
     console.log('Org wallet', orgWallet)
     if(!orgWallet || !orgWallet?.address){
       console.log('Error sending payment, no wallet found for chain', chainName)
@@ -280,6 +280,37 @@ export default function DonationForm(props:any) {
     
     sendPayment({organization, initiative, chainName, chainInfo, wallet, receiver, currency, amount, name, email, receipt})
   }
+
+  function recalc(){
+    console.log('--RECALC')
+    //const amountInp = evt.target.value || '0'
+    const amountInp = $('amount')?.value || '0'
+    const amountNum = parseFloat(amountInp)
+    const coinValue = showSYM ? amountNum : (amountNum / usdRate)
+    const usdValue  = showSYM ? (amountNum * usdRate) : amountNum
+    const rateMsg   = showSYM 
+      ? `${usdValue.toFixed(2)} USD at ${usdRate.toFixed(2)} USD/${currency}` 
+      : `${coinValue.toFixed(2)} ${currency} at ${usdRate.toFixed(2)} USD/${currency}`
+    console.log('USD', usdValue, currency, coinValue, showSYM?'ON':'OFF')
+    setRateMessage(rateMsg)
+    console.log('Changed', amountInp)
+    const data = {...donation, amount:coinValue, amountFiat:usdValue, ticker:currency}
+    setDonation(data)
+    console.log('DATA', data)
+  }
+
+  function refresh(){
+    const name = $('name-input').value || 'Anonymous'
+    console.log('NAME', name)
+    const data = {...donation, donor:{address:donation.donor.address, name}}
+    setDonation(data)
+    console.log('DATA', data)
+  }
+
+  useEffect(() => {
+    console.log('SWITCH')
+    recalc()
+  }, [showSYM])
 
   return (
     <div className="flex min-h-full w-full mt-4">
@@ -324,9 +355,9 @@ export default function DonationForm(props:any) {
                 <Label htmlFor="show-usd-toggle">USD</Label>
                 <Switch
                   id="show-usd-toggle"
-                  valueBasis={showUSD}
+                  valueBasis={showSYM}
                   handleToggle={() => {
-                    toggleShowUSD(!showUSD)
+                    toggleShowSYM(!showSYM)
                   }}
                 />
                 <Label>{chainLookup[currentChain].coinSymbol}</Label>
@@ -337,27 +368,19 @@ export default function DonationForm(props:any) {
                 className="pl-4"
                 type="text"
                 id="amount"
-                text={ showUSD ? '| ' + chainLookup[currentChain].coinSymbol : '| USD' }
+                text={ showSYM ? '| ' + chainLookup[currentChain].coinSymbol : '| USD' }
                 ref={amountRef}
                 divRef={amountRef}
+                onChange={recalc}
               />
             </div>
             <Label className="block mt-2 text-right">{rateMessage}</Label>
           </div>
-          <Label htmlFor="name-input" className="mb-2">
-            Name (optional)
-          </Label>
-          <Input type="text" className="pl-4 mb-6" id="name-input" ref={nameRef} />
-          <Label htmlFor="email-input" className="mb-2">
-            Email address (optional)
-          </Label>
+          <Label htmlFor="name-input" className="mb-2">Name (optional)</Label>
+          <Input type="text" className="pl-4 mb-6" id="name-input" ref={nameRef} onChange={refresh} />
+          <Label htmlFor="email-input" className="mb-2">Email address (optional)</Label>
           <Input type="text" className="pl-4 mb-6" id="email-input" ref={emailRef} />
-          <CheckboxWithText
-            id="receipt-check"
-            text="I'd like to receive an emailed receipt"
-            className="mb-2"
-            ref={receiptRef}
-          />
+          <CheckboxWithText id="receipt-check" text="I'd like to receive an emailed receipt" className="mb-2" ref={receiptRef} />
         </div>
         <Separator />
         <div className="flex flex-col items-center justify-center">
