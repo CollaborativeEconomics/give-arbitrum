@@ -1,5 +1,6 @@
 'use client'
 import { useState } from "react"
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 //import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
@@ -28,8 +29,8 @@ type Receipt = {
 type Dictionary = { [key: string]: any }
 
 export default function TableReceipts(props: { receipts: NFTData[] }){
+  const router = useRouter()
   const receipts = props?.receipts || []
-
   const rows:Receipt[] = receipts.map(rec => { 
     return {
       id: rec.id,
@@ -80,7 +81,21 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
     getSortedRowModel: getSortedRowModel()
   })
 
-  const allRows = table.getRowModel().rows
+  const list = table.getRowModel().rows
+
+  function clicked(evt:any){
+    let rowid = 0
+    // If image, get parent id
+    if(evt.target.parentNode.tagName=='TD'){
+      rowid = parseInt(evt.target.parentNode.parentNode.dataset.id)
+    } else {
+      rowid = parseInt(evt.target.parentNode.dataset.id)
+    }
+    const nftid = data[rowid].id
+    console.log('CLICKED', rowid, nftid)
+    console.log('DATA', data[rowid])
+    router.push('/nft/'+nftid)
+  }
 
   function NoRows(){
     return (
@@ -91,9 +106,9 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
   }
 
   function AllRows(){
-    return allRows.map((row) => {
+    return list.map((row) => {
       return (
-        <TableRow key={row.id}>
+        <TableRow key={row.id} data-id={row.id}>
           {row.getVisibleCells().map((cell) => { 
             return (
               <TableCell key={cell.id}>
@@ -140,8 +155,8 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
           </TableRow>
         ))}
       </TableHeader>
-      <TableBody>
-        { allRows.length ? <AllRows /> : <NoRows /> }
+      <TableBody onClick={clicked}>
+        { list.length ? <AllRows /> : <NoRows /> }
       </TableBody>
     </Table>
   )

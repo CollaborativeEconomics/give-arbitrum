@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { title } from 'process'
 import { coinFromChain } from '@/lib/utils/chain'
@@ -38,8 +39,8 @@ interface DonationHeader extends Omit<Donation, 'initiative' | 'organization'> {
 type Dictionary = { [key: string]: any }
 
 export default function TableDonationsSort(props: Dictionary) {
+  const router = useRouter()
   const donations: Donation[] = props?.donations || []
-
   const records = donations.map((rec) => {
     return {
       id: rec.id,
@@ -94,7 +95,22 @@ export default function TableDonationsSort(props: Dictionary) {
     getSortedRowModel: getSortedRowModel()
   })
 
-  const allRows = table.getRowModel().rows
+  const list = table.getRowModel().rows
+
+  function clicked(evt:any){
+    if(list.length<1){ return }
+    let rowid = 0
+    // If image, get parent id
+    if(evt.target.parentNode.tagName=='TD'){
+      rowid = parseInt(evt.target.parentNode.parentNode.dataset.id)
+    } else {
+      rowid = parseInt(evt.target.parentNode.dataset.id)
+    }
+    const nftid = data[rowid].id
+    console.log('CLICKED', rowid, nftid)
+    console.log('DATA', data[rowid])
+    router.push('/donations/'+nftid)
+  }
 
   function NoRows(){
     return (
@@ -105,9 +121,9 @@ export default function TableDonationsSort(props: Dictionary) {
   }
 
   function AllRows(){
-    return allRows.map((row) => {
+    return list.map((row) => {
       return (
-        <TableRow key={row.id}>
+        <TableRow key={row.id} data-id={row.id}>
           {row.getVisibleCells().map((cell) => {
             return (
               <TableCell key={cell.id}>
@@ -154,8 +170,8 @@ export default function TableDonationsSort(props: Dictionary) {
           </TableRow>
         ))}
       </TableHeader>
-      <TableBody>
-        { allRows.length ? <AllRows /> : <NoRows /> }
+      <TableBody onClick={clicked}>
+        { list.length ? <AllRows /> : <NoRows /> }
       </TableBody>
     </Table>
   )
