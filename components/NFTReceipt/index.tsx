@@ -20,6 +20,7 @@ export default function NFTReceipt(props: { receipt: Receipt }) {
   async function mintNFT(
     txid: string,
     initid: string,
+    donationId: string,
     donor: string,
     destin: string,
     amount: number,
@@ -32,12 +33,12 @@ export default function NFTReceipt(props: { receipt: Receipt }) {
       donor,
       destin,
       amount,
-      rate,
+      rate
     );
     const options = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ txid, initid, donor, destin, amount, rate }),
+      body: JSON.stringify({ txid, initid, donationId, donor, destin, amount, rate }),
     };
     const response = await fetch('/api/nft/mint', options);
     //console.log('Minting response', response)
@@ -64,6 +65,7 @@ export default function NFTReceipt(props: { receipt: Receipt }) {
     const minted = await mintNFT(
       donation.txid,
       donation.initiativeId,
+      donation.donationId,
       donation.donor.address,
       donation.receiver,
       donation.amount,

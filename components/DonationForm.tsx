@@ -195,8 +195,8 @@ export default function DonationForm(props:any) {
       }
 
       // Save donation to db
-      const saveResp = await saveDonation({organization, initiative, sender, chainName, network, coinValue, usdValue, currency, user})
-      if(!saveResp){
+      const donationId = await saveDonation({organization, initiative, sender, chainName, network, coinValue, usdValue, currency, user})
+      if(!donationId){
         setButtonText('ERROR')
         setMessage('Donation could not be saved to database, please contact support')
         return false
@@ -242,7 +242,8 @@ export default function DonationForm(props:any) {
         receiver,
         chainName,
         rate: usdRate,
-        txid: result.txid
+        txid: result.txid,
+        donationId
       }
       setDonation(NFTData)
       setButtonText('DONE')

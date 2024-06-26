@@ -22,9 +22,10 @@ export async function POST(request: Request) {
 
   try {
     const body:any = await request.json()
-    const {txid, initid, donor, destin, amount, rate} = body
+    const {txid, initid, donationId, donor, destin, amount, rate} = body
     console.log('TXID', txid)
     console.log('INIT', initid)
+    console.log('DONID', donationId)
     console.log('DONOR', donor)
     console.log('DESTIN', destin)
     console.log('AMOUNT', amount)
@@ -122,10 +123,11 @@ export async function POST(request: Request) {
     // Save NFT data to Prisma
     const data = {
       created: new Date(),
-      userId: userId,
-      donorAddress: donorAddress,
-      organizationId: organizationId,
-      initiativeId: initiativeId,
+      userId,
+      donorAddress,
+      organizationId,
+      initiativeId,
+      donationId,
       metadataUri: uriMeta,
       imageUri: uriImage,
       coinLabel: chainName,

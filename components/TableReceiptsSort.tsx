@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import { useState } from "react"
 import Image from 'next/image'
 //import { ChevronUp, ChevronDown } from 'lucide-react'
@@ -29,6 +29,7 @@ type Dictionary = { [key: string]: any }
 
 export default function TableReceipts(props: { receipts: NFTData[] }){
   const receipts = props?.receipts || []
+
   const rows:Receipt[] = receipts.map(rec => { 
     return {
       id: rec.id,
@@ -79,10 +80,18 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
     getSortedRowModel: getSortedRowModel()
   })
 
-  const receiptRows = table.getRowModel().rows
+  const allRows = table.getRowModel().rows
 
-  function ShowRows(){
-    return receiptRows.map((row) => {
+  function NoRows(){
+    return (
+      <TableRow>
+        <TableCell className="col-span-5">No receipts found</TableCell>
+      </TableRow>
+    )
+  }
+
+  function AllRows(){
+    return allRows.map((row) => {
       return (
         <TableRow key={row.id}>
           {row.getVisibleCells().map((cell) => { 
@@ -100,14 +109,6 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
     })
   }
 
-  function NoRows(){
-    return (
-      <TableRow>
-        <TableCell className="col-span-5">No receipts found</TableCell>
-      </TableRow>
-    )
-  }
-
   return (
     <Table id="table-nfts" className="w-full">
       <TableHeader>
@@ -115,26 +116,24 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
               <TableHead key={header.id}>
-                {header.isPlaceholder
-                ? null
-                : (
-                    <div
-                      {...{
-                        className: header.column.getCanSort()
-                          ? 'cursor-pointer select-none'
-                          : '',
-                        onClick: header.column.getToggleSortingHandler()
-                      }}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {{
-                        asc : ' ↑',
-                        desc: ' ↓',
-                      }[header.column.getIsSorted() as string] ?? null}
-                    </div>
+                {header.isPlaceholder ? null : (
+                  <div
+                    {...{
+                      className: header.column.getCanSort()
+                        ? 'cursor-pointer select-none'
+                        : '',
+                      onClick: header.column.getToggleSortingHandler()
+                    }}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {{
+                      asc:  ' ↑',
+                      desc: ' ↓',
+                    }[header.column.getIsSorted() as string] ?? null}
+                  </div>
                 )}
               </TableHead>
             ))}
@@ -142,7 +141,7 @@ export default function TableReceipts(props: { receipts: NFTData[] }){
         ))}
       </TableHeader>
       <TableBody>
-        { receiptRows.length ? <ShowRows /> : <NoRows /> }
+        { allRows.length ? <AllRows /> : <NoRows /> }
       </TableBody>
     </Table>
   )

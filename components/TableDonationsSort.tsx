@@ -1,14 +1,10 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
+import { title } from 'process'
 import { coinFromChain } from '@/lib/utils/chain'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+
 import {
   ColumnDef,
   createColumnHelper,
@@ -18,7 +14,6 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { title } from 'process'
 
 interface Donation {
   id: string
@@ -31,6 +26,8 @@ interface Donation {
   }
   amount: string
   chain: string
+  storyId: string
+  image: string
 }
 
 interface DonationHeader extends Omit<Donation, 'initiative' | 'organization'> {
@@ -51,6 +48,8 @@ export default function TableDonationsSort(props: Dictionary) {
       organization: rec.organization.name,
       amount: rec.amount,
       chain: rec.chain,
+      storyId: rec.storyId,
+      image: rec.storyId ? '/media/icon-story.svg' : ''
     }
   })
 
@@ -80,6 +79,10 @@ export default function TableDonationsSort(props: Dictionary) {
       header: 'Chain',
       cell: (info) => coinFromChain(info.getValue()).toUpperCase(),
     }),
+    columnHelper.accessor('image', {
+      header: 'Impact',
+      cell: (info) => info.getValue()
+    }),
   ]
 
   const table = useReactTable({
@@ -88,12 +91,12 @@ export default function TableDonationsSort(props: Dictionary) {
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: getSortedRowModel()
   })
 
-  const donationRows = table.getRowModel().rows
+  const allRows = table.getRowModel().rows
 
-  const NoRows = () => {
+  function NoRows(){
     return (
       <TableRow>
         <TableCell className="col-span-5">No donations found</TableCell>
@@ -101,15 +104,20 @@ export default function TableDonationsSort(props: Dictionary) {
     )
   }
 
-  const AllRows = () => {
-    return donationRows.map((row) => {
+  function AllRows(){
+    return allRows.map((row) => {
       return (
         <TableRow key={row.id}>
-          {row.getVisibleCells().map((cell) => (
-            <TableCell key={cell.id}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </TableCell>
-          ))}
+          {row.getVisibleCells().map((cell) => {
+            return (
+              <TableCell key={cell.id}>
+                { (cell?.column?.id=='image' && cell?.getValue()!='')
+                  ? (<Image src={cell?.getValue() as string} width={20} height={20} alt="NFT" />)
+                  : flexRender(cell.column.columnDef.cell, cell.getContext())
+                }
+              </TableCell>
+            )}
+          )}
         </TableRow>
       )
     })
@@ -128,7 +136,7 @@ export default function TableDonationsSort(props: Dictionary) {
                       className: header.column.getCanSort()
                         ? 'cursor-pointer select-none'
                         : '',
-                      onClick: header.column.getToggleSortingHandler(),
+                      onClick: header.column.getToggleSortingHandler()
                     }}
                   >
                     {flexRender(
@@ -136,7 +144,7 @@ export default function TableDonationsSort(props: Dictionary) {
                       header.getContext()
                     )}
                     {{
-                      asc: ' ↑',
+                      asc:  ' ↑',
                       desc: ' ↓',
                     }[header.column.getIsSorted() as string] ?? null}
                   </div>
@@ -146,7 +154,9 @@ export default function TableDonationsSort(props: Dictionary) {
           </TableRow>
         ))}
       </TableHeader>
-      <TableBody>{donationRows.length ? <AllRows /> : <NoRows />}</TableBody>
+      <TableBody>
+        { allRows.length ? <AllRows /> : <NoRows /> }
+      </TableBody>
     </Table>
   )
 }
