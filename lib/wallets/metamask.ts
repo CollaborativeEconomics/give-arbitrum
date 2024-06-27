@@ -295,12 +295,14 @@ export default class Wallet {
   async payment(destin:string, amount:string, memo?:string){
     function numHex(num:number) { return '0x'+(num).toString(16) }
     function strHex(str:string) { return '0x'+Buffer.from(str.toString(), 'utf8').toString('hex') }
-    console.log(`Sending ${amount} to ${destin}...`)
     const gasPrice = await this.getGasPrice() //numHex(100000000)
     console.log('GAS', parseInt(gasPrice), gasPrice)
-    const gas = numHex(2100000)
+    const gasEstim = await this.metamask.request({method:'eth_estimateGas', params:[{from:this.myaccount, to:destin}]})
+    console.log('EST', parseInt(gasEstim), gasEstim)
+    const gas = gasEstim
     const wei = numHex(parseFloat(amount) * 10**18)
     const method = 'eth_sendTransaction'
+    console.log(`Sending ${amount} ${wei} to ${destin}...`)
     const tx = {
       from: this.myaccount,
       to: destin,

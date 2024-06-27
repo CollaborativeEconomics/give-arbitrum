@@ -168,10 +168,11 @@ export default function DonationForm(props:any) {
       ? `USD ${usdValue.toFixed(2)} at ${usdRate.toFixed(2)} ${currency}/USD` 
       : `${coinValue.toFixed(4)} ${currency} at ${usdRate.toFixed(2)} ${currency}/USD`
     console.log('AMT', showSYM, coinValue, usdValue)
+    const coinAmount = coinValue.toFixed(18)
     setRateMessage(rateMsg)
-    console.log('PAY', coinValue, usdValue)
+    console.log('PAY', coinValue, coinAmount, usdValue)
 
-    sdk.sendPayment(receiver, coinValue, destinationTag, async (result:any)=>{
+    sdk.sendPayment(receiver, coinAmount, destinationTag, async (result:any)=>{
       if(result?.error){
         console.log('Error sending payment:', result.error)
         setMessage('Error sending payment')
