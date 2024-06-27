@@ -292,13 +292,13 @@ export default class Wallet {
     console.log({txHash})
   }
 
-  async payment(destin:string, amount:string, memo:string){
+  async payment(destin:string, amount:string, memo?:string){
     function numHex(num:number) { return '0x'+(num).toString(16) }
     function strHex(str:string) { return '0x'+Buffer.from(str.toString(), 'utf8').toString('hex') }
     console.log(`Sending ${amount} to ${destin}...`)
-    const gasPrice = await this.getGasPrice() //numHex(20000000000)
+    const gasPrice = await this.getGasPrice() //numHex(100000000)
     console.log('GAS', parseInt(gasPrice), gasPrice)
-    const gas = numHex(210000)
+    const gas = numHex(2100000)
     const wei = numHex(parseFloat(amount) * 10**18)
     const method = 'eth_sendTransaction'
     const tx = {
@@ -322,7 +322,7 @@ export default class Wallet {
     }
   }
 
-  async paytoken(destin:string, amount:string, token:string, contract:string, memo:string){
+  async paytoken(destin:string, amount:string, token:string, contract:string, memo?:string){
     function numHex(num:number) { return '0x'+(num).toString(16) }
     function strHex(str:string) { return '0x'+Buffer.from(str.toString(), 'utf8').toString('hex') }
     console.log(`Sending ${amount} ${token} token to ${destin}...`)

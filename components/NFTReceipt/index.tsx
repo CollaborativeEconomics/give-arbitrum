@@ -120,7 +120,7 @@ export default function NFTReceipt(props: { receipt: Receipt }) {
             <NFTReceiptText>Donation amount</NFTReceiptText>
             <div className="flex border-dotted border-t-2 border-gray-300 w-full"></div>
             <NFTReceiptText>
-              {decimalString(donation.amount, 2)} {donation.ticker}*
+              {decimalString(donation.amount, 4)} {donation.ticker}*
             </NFTReceiptText>
           </div>
           <NFTReceiptText className="font-normal whitespace-normal">

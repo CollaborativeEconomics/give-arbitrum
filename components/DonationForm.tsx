@@ -53,7 +53,7 @@ interface IPayment {
 }
 
 export default function DonationForm(props:any) {
-  console.log('Props', props)
+  //console.log('Props', props)
   const initiative = props.initiative
   const usdRate = props.rate
   const organization = initiative?.organization
@@ -65,8 +65,14 @@ export default function DonationForm(props:any) {
   const chainLookup = getChainsMap()
   const chainWallets = getChainWallets(currency)
   const chainInfo = chainLookup[chainName]
+  //console.log({currency})
+  //console.log({chainName})
+  //console.log({chains})
+  //console.log({chainLookup})
+  //console.log({chainWallets})
+  //console.log({chainInfo})
   const [showSYM, toggleShowSYM] = useState(false)
-  const [currentChain, setCurrentChain] = useState('Arbitrum')
+  const [currentChain, setCurrentChain] = useState(chainName)
   const [wallets, setWallets] = useState(chainWallets)
   const [currentWallet, setCurrentWallet] = useState(wallets[0])
   //const amountInputRef = useRef()
@@ -96,8 +102,8 @@ export default function DonationForm(props:any) {
     return null
   }
 
-  async function validForm({amount, email, receipt}:IForm){
-    if(!parseInt(amount)){
+  function validForm({amount, email, receipt}:IForm){
+    if(parseFloat(amount)<=0){
       setMessage('Enter a valid amount')
       return false
     }
@@ -105,6 +111,7 @@ export default function DonationForm(props:any) {
       setMessage('Enter a valid email')
       return false
     }
+    return true
   }
 
   async function saveDonation({organization, initiative, sender, chainName, network, coinValue, usdValue, currency, user}:IDonation){
@@ -159,14 +166,14 @@ export default function DonationForm(props:any) {
     const usdValue  = showSYM ? (amountNum * usdRate) : amountNum
     const rateMsg   = showSYM 
       ? `USD ${usdValue.toFixed(2)} at ${usdRate.toFixed(2)} ${currency}/USD` 
-      : `${coinValue.toFixed(2)} ${currency} at ${usdRate.toFixed(2)} ${currency}/USD`
+      : `${coinValue.toFixed(4)} ${currency} at ${usdRate.toFixed(2)} ${currency}/USD`
     console.log('AMT', showSYM, coinValue, usdValue)
     setRateMessage(rateMsg)
     console.log('PAY', coinValue, usdValue)
 
     sdk.sendPayment(receiver, coinValue, destinationTag, async (result:any)=>{
       if(result?.error){
-        console.log('Error sending payment', result.error)
+        console.log('Error sending payment:', result.error)
         setMessage('Error sending payment')
         return false
       }
@@ -213,7 +220,7 @@ export default function DonationForm(props:any) {
           address:  organization?.mailingAddress,
           ein:      organization?.EIN,
           currency: currency,
-          amount:   coinValue.toFixed(2),
+          amount:   coinValue.toFixed(4),
           usd:      usdValue.toFixed(2)
         }
         const receiptResp = await sendReceipt(data)
@@ -291,7 +298,7 @@ export default function DonationForm(props:any) {
     const usdValue  = showSYM ? (amountNum * usdRate) : amountNum
     const rateMsg   = showSYM 
       ? `${usdValue.toFixed(2)} USD at ${usdRate.toFixed(2)} USD/${currency}` 
-      : `${coinValue.toFixed(2)} ${currency} at ${usdRate.toFixed(2)} USD/${currency}`
+      : `${coinValue.toFixed(4)} ${currency} at ${usdRate.toFixed(2)} USD/${currency}`
     console.log('USD', usdValue, currency, coinValue, showSYM?'ON':'OFF')
     setRateMessage(rateMsg)
     console.log('Changed', amountInp)

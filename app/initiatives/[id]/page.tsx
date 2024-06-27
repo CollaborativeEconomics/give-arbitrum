@@ -25,7 +25,8 @@ export default async function Donate(props: { params: { id: string } }) {
   const organization = initiative?.organization
   const stories = initiative?.stories
   const initiatives = await getInitiativesByOrganization(organization.id)
-  const rate = await getRates('ARB')
+  //const coin = process.env.NEXT_PUBLIC_CURRENCY_CODE || 'ARB'
+  const rate = await getRates('ETH') // Find ARB contract
 
   const receipt = {
     status: ReceiptStatus.pending,
