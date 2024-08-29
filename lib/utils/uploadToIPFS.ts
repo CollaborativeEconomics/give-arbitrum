@@ -1,4 +1,4 @@
-import {S3Client, PutObjectCommand, HeadObjectCommand} from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 
 // Uploads buffer data to AWS buckets
 // Can be a file or text as metadata
@@ -6,7 +6,7 @@ import {S3Client, PutObjectCommand, HeadObjectCommand} from '@aws-sdk/client-s3'
 //   Text can be read as Buffer.from(text)
 //   File can be read as fs.readFileSync(path)
 // Mime type is required text/plain image/jpeg image/png
-export default async function uploadToIPFS(fileId:string, bytes:Buffer, mimeType:string) {
+export default async function uploadToIPFS(fileId: string, bytes: Buffer, mimeType: string) {
   try {
     let endpoint = process.env.IPFS_API_ENDPOINT || ''
     let accessKeyId = process.env.IPFS_API_KEY || ''
@@ -19,7 +19,7 @@ export default async function uploadToIPFS(fileId:string, bytes:Buffer, mimeType
     //console.log('SECRET:', secretAccessKey)
     //let config = {region, accessKeyId, secretAccessKey}
     //let config = { accessKeyId, secretAccessKey, endpoint, region }
-    let config = { endpoint, region }
+    let config = { endpoint, region, credentials: { accessKeyId, secretAccessKey } }
     let params = {
       Bucket: bucket,
       Key: fileId,
@@ -30,20 +30,20 @@ export default async function uploadToIPFS(fileId:string, bytes:Buffer, mimeType
     let action = new PutObjectCommand(params)
     let result = await client.send(action)
     //console.log('PUT', result)
-    if(!result?.ETag){
-      return {error:'Error uploading file, no eTag'}
+    if (!result?.ETag) {
+      return { error: 'Error uploading file, no eTag' }
     }
-    let head = new HeadObjectCommand({Bucket: bucket, Key: fileId})
+    let head = new HeadObjectCommand({ Bucket: bucket, Key: fileId })
     let data = await client.send(head)
     //console.log('GET', data)
     data.$metadata.httpStatusCode === 200
-    if(!data?.Metadata?.cid){
-      return {error:'Error retrieving file info'}
+    if (!data?.Metadata?.cid) {
+      return { error: 'Error retrieving file info' }
     }
     //return data?.Metadata?.cid
-    return {success:true, result:data?.Metadata?.cid}
-  } catch(ex:any) {
+    return { success: true, result: data?.Metadata?.cid }
+  } catch (ex: any) {
     console.error(ex)
-    return {error:'Error uploading file: '+ex.message}
+    return { error: 'Error uploading file: ' + ex.message }
   }
 }
