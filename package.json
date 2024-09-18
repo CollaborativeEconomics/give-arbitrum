@@ -39,7 +39,7 @@
     "images": "^3.2.4",
     "lucide-react": "^0.288.0",
     "mailgun.js": "^10.1.0",
-    "next": "^14.1.0",
+    "next": "^14.2.12",
     "next-auth": "^4.24.5",
     "next-themes": "^0.2.1",
     "pino-pretty": "^10.2.3",
